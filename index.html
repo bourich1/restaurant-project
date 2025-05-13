@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chhiwat Bladi - Cuisine Marocaine Authentique</title>
+    <meta name="description"
+        content="Découvrez Chhiwat Bladi, un restaurant marocain en Darija proposant des plats traditionnels savoureux : couscous, tajines, pâtisseries et plus.">
+    <meta name="keywords"
+        content="Chhiwat Bladi, restaurant marocain, cuisine marocaine, tajine, couscous, plats traditionnels, Darija, Maroc, gastronomie marocaine">
+    <meta name="author" content="Chhiwat Bladi Team">
+    <link rel="shortcut icon" href="accsest/images/logo.jpeg" type="image/x-icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+        integrity="sha512-jQBUKcCfZJIKX8WkPvJzF1J2d5KJdYMdllrwWT9x5c8Lq9Jzk1TrKztxQKBD3zfz6ptxAiOukg6Ld57zj4+K2g=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- link css -->
+    <link rel="stylesheet" href="accsest/css/style.css">
+    <!-- font awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+</head>
+
+<body>
+    <header>
+        <a href="#" class="logo">
+            <img src="accsest/images/logo.jpeg" alt="logo Chhiwat Bladi">
+        </a>
+        <div class="header-wtsp">
+            <div class="iformation-hed">
+                <p>Informations via WhatsApp :</p>
+                <h3>+212647262361</h3>
+                <span class="badg">Tous les jours de 7h à 23h</span>
+            </div>
+            <a href="#" class="icon-wtp">
+                <img src="accsest/images/wtsp-icon.png" alt="wtsp-icon">
+            </a>
+        </div>
+    </header>
+    <section class="hero">
+        <!-- Search Bar -->
+        <div class="search-container">
+            <div class="search-bar">
+                <input type="text" placeholder="Search Moroccan dishes..." id="searchInput">
+                <button class="search-btn">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Your existing food category buttons -->
+        <div class="controls-container">
+            <button id="scrollLeft" class="scroll-btn">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+
+            <div class="centered-controls">
+                <div id="scrollContainer" class="controls">
+                    <button class="filter-btn active" data-category="all">All Dishes</button>
+                    <button class="filter-btn" data-category="tajines">Tajines</button>
+                    <button class="filter-btn" data-category="couscous">Couscous</button>
+                    <button class="filter-btn" data-category="pastilla">Pastilla</button>
+                    <button class="filter-btn" data-category="harira">Harira</button>
+                    <button class="filter-btn" data-category="rfissa">Rfissa</button>
+                    <button class="filter-btn" data-category="msemen">Msemen</button>
+                    <button class="filter-btn" data-category="hout">Seafood</button>
+                </div>
+            </div>
+
+            <button id="scrollRight" class="scroll-btn">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+        <section class="meals-container" id="mealsContainer">
+            
+        </section>
+    </section>
+    <!-- cart -->
+     <!-- Add this HTML at the end of your body -->
+<div class="cart-container">
+    <button class="cart-toggle-btn">
+        <i class="fas fa-shopping-cart"></i>
+        <span class="cart-count">0</span>
+    </button>
+    
+    <div class="cart-sidebar">
+        <div class="cart-header">
+            <h3>Your Order</h3>
+            <button class="close-cart">&times;</button>
+        </div>
+        <div class="cart-items">
+            <!-- Cart items will be added here dynamically -->
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span class="total-price">0.00 Dhs</span>
+            </div>
+            <button class="checkout-btn">Proceed to Checkout</button>
+        </div>
+    </div>
+</div>
+    <!-- modal -->
+    <div id="productModal" class="modal">
+  <div class="modal-content">
+    <span class="close-modal">&times;</span>
+    <div class="modal-image-container">
+      <img id="modalImage" src="" alt="">
+    </div>
+    <div class="modal-info">
+      <h2 id="modalTitle"></h2>
+      <div class="modal-rating" id="modalRating"></div>
+      <p class="modal-category" id="modalCategory"></p>
+      <p class="modal-description">Traditional Moroccan dish prepared with authentic spices and fresh ingredients.</p>
+      <div class="modal-price-container">
+        <span class="modal-price" id="modalPrice"></span>
+        <div class="quantity-selector">
+          <button class="quantity-btn minus">-</button>
+          <span class="quantity">1</span>
+          <button class="quantity-btn plus">+</button>
+        </div>
+      </div>
+      <button class="modal-add-btn">
+        <i class="fas fa-shopping-cart"></i> Add to Cart - <span id="modalTotalPrice"></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+    <footer class="site-footer">
+    <div class="footer-container">
+        <!-- Logo and Description -->
+        <div class="footer-col footer-about">
+            <div class="footer-logo">
+                <img src="accsest/images/logo.jpeg" alt="Beldi Kitchen Logo">
+            </div>
+            <p class="footer-description">
+                Authentic Moroccan cuisine prepared with traditional recipes and the freshest ingredients. 
+                Bringing the flavors of Morocco to your table since 2010.
+            </p>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="footer-col footer-contact">
+            <h3 class="footer-title">Contact Us</h3>
+            <ul class="contact-list">
+                <li>
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>123 Medina Street, Marrakech, Morocco</span>
+                </li>
+                <li>
+                    <i class="fas fa-phone"></i>
+                    <span>+212 6 12 34 56 78</span>
+                </li>
+                <li>
+                    <i class="fas fa-envelope"></i>
+                    <span>contact@beldikitchen.ma</span>
+                </li>
+                <li>
+                    <i class="fas fa-clock"></i>
+                    <span>Open Daily: 10:00 AM - 11:00 PM</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Social Media -->
+        <div class="footer-col footer-social">
+            <h3 class="footer-title">Follow Us</h3>
+            <div class="social-icons">
+                <a href="#" class="social-icon" aria-label="Facebook">
+                    <i class="fab fa-facebook-f"></i>
+                </a>
+                <a href="#" class="social-icon" aria-label="Instagram">
+                    <i class="fab fa-instagram"></i>
+                </a>
+                <a href="#" class="social-icon" aria-label="Twitter">
+                    <i class="fab fa-twitter"></i>
+                </a>
+                <a href="#" class="social-icon" aria-label="YouTube">
+                    <i class="fab fa-youtube"></i>
+                </a>
+                <a href="#" class="social-icon" aria-label="TripAdvisor">
+                    <i class="fab fa-tripadvisor"></i>
+                </a>
+            </div>
+            
+            <!-- Newsletter Signup -->
+            <div class="newsletter">
+                <h4>Subscribe to Our Newsletter</h4>
+                <form class="newsletter-form">
+                    <input type="email" placeholder="Your email address" required>
+                    <button type="submit">Subscribe</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Copyright -->
+    <div class="footer-bottom">
+        <div class="footer-container">
+            <p>&copy; 2025 Beldi Kitchen. All Rights Reserved.</p>
+        </div>
+    </div>
+</footer>
+
+    <script src="accsest/js/script.js"></script>
+</body>
+
+</html>
