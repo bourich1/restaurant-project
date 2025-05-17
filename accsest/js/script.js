@@ -92,428 +92,298 @@ const meals = [
     }
 ];
 
-// Current meal for modal
 let currentMeal = null;
+let cart = [];
 
-// DOM Elements
-const searchInput = document.getElementById('searchInput');
-const mealsContainer = document.getElementById('mealsContainer');
-const modal = document.getElementById('productModal');
-
-// Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     createMealCards();
-    setupModalListeners();
     setupSearch();
     setupFilterButtons();
+    setupModalListeners();
     setupScrollButtons();
+    initCart();
+    setupCheckoutListeners();
 });
 
-// Generate star rating HTML
+// ==== RENDERING ====
 function generateStarRating(rating) {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 >= 0.5;
-    let starsHTML = '';
-    
-    for (let i = 0; i < fullStars; i++) starsHTML += '<i class="fas fa-star"></i>';
-    if (hasHalfStar) starsHTML += '<i class="fas fa-star-half-alt"></i>';
-    for (let i = 0; i < (5 - fullStars - (hasHalfStar ? 1 : 0)); i++) {
-        starsHTML += '<i class="far fa-star"></i>';
-    }
-    
-    return starsHTML;
+    let html = '';
+    for (let i = 0; i < fullStars; i++) html += '<i class="fas fa-star"></i>';
+    if (hasHalfStar) html += '<i class="fas fa-star-half-alt"></i>';
+    for (let i = 0; i < (5 - fullStars - (hasHalfStar ? 1 : 0)); i++) html += '<i class="far fa-star"></i>';
+    return html;
 }
 
-// Create meal cards
 function createMealCards(mealsToShow = meals) {
-    mealsContainer.innerHTML = '';
-    
-    if (mealsToShow.length === 0) {
-        mealsContainer.innerHTML = '<p class="no-results">No dishes found. Try another search.</p>';
-        return;
-    }
-    
+    const container = document.getElementById('mealsContainer');
+    container.innerHTML = mealsToShow.length ? '' : '<p class="no-results">No dishes found. Try another search.</p>';
+
     mealsToShow.forEach(meal => {
         const card = document.createElement('div');
         card.className = 'meal-card';
         card.dataset.category = meal.category;
-        
         card.innerHTML = `
             <div class="card-image">
                 <img src="${meal.image}" alt="${meal.name}">
-                <span class="category-label">${meal.category.charAt(0).toUpperCase() + meal.category.slice(1)}</span>
+                <span class="category-label">${meal.category}</span>
                 <button class="fav-btn"><i class="far fa-heart"></i></button>
             </div>
             <div class="card-content">
                 <h3>${meal.name}</h3>
-                <div class="rating">
-                    ${generateStarRating(meal.rating)}
-                    <span>${meal.rating}</span>
-                </div>
+                <div class="rating">${generateStarRating(meal.rating)} <span>${meal.rating}</span></div>
             </div>
             <div class="card-footer">
                 <span class="price">$${meal.price.toFixed(2)}</span>
-                <button class="add-btn" title="Add to cart">
-                    <i class="fas fa-shopping-cart"></i>
-                </button>
+                <button class="add-btn"><i class="fas fa-shopping-cart"></i></button>
             </div>
         `;
-        
-        // Add click event to the whole card (excluding favorite button)
-        card.addEventListener('click', (e) => {
-            if (!e.target.closest('.fav-btn') && !e.target.closest('.add-btn')) {
-                openModal(meal);
-            }
-        });
-        
-        // Add click event to "Add to Cart" button in card
-        const addBtn = card.querySelector('.add-btn');
-        addBtn.addEventListener('click', (e) => {
+        card.querySelector('.add-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             openModal(meal);
         });
-        
-        mealsContainer.appendChild(card);
+        card.addEventListener('click', (e) => {
+            if (!e.target.closest('.fav-btn')) openModal(meal);
+        });
+        container.appendChild(card);
     });
-    
-    // Setup favorite buttons
+
     document.querySelectorAll('.fav-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
+        btn.addEventListener('click', e => {
             e.stopPropagation();
-            this.innerHTML = this.innerHTML.includes('far') ? 
-                '<i class="fas fa-heart"></i>' : 
-                '<i class="far fa-heart"></i>';
+            btn.innerHTML = btn.innerHTML.includes('far') ? '<i class="fas fa-heart"></i>' : '<i class="far fa-heart"></i>';
         });
     });
 }
 
-// Modal functionality
+// ==== MODAL ====
 function openModal(meal) {
     currentMeal = meal;
-    const modalTitle = document.getElementById('modalTitle');
-    const modalImage = document.getElementById('modalImage');
-    const modalRating = document.getElementById('modalRating');
-    const modalCategory = document.getElementById('modalCategory');
-    const modalPrice = document.getElementById('modalPrice');
-    const modalTotalPrice = document.getElementById('modalTotalPrice');
-    
-    // Set modal content
-    modalTitle.textContent = meal.name;
-    modalImage.src = meal.image;
-    modalImage.alt = meal.name;
-    modalRating.innerHTML = `${generateStarRating(meal.rating)} <span>${meal.rating} (${meal.reviews} reviews)</span>`;
-    modalCategory.textContent = meal.category.charAt(0).toUpperCase() + meal.category.slice(1);
-    modalPrice.textContent = `$${meal.price.toFixed(2)}`;
-    modalTotalPrice.textContent = `$${meal.price.toFixed(2)}`;
-    
-    // Reset quantity
+    document.getElementById('modalTitle').textContent = meal.name;
+    document.getElementById('modalImage').src = meal.image;
+    document.getElementById('modalRating').innerHTML = `${generateStarRating(meal.rating)} <span>${meal.rating} (${meal.reviews} reviews)</span>`;
+    document.getElementById('modalCategory').textContent = meal.category;
+    document.getElementById('modalPrice').textContent = `$${meal.price.toFixed(2)}`;
+    document.getElementById('modalTotalPrice').textContent = `$${meal.price.toFixed(2)}`;
     document.querySelector('.quantity').textContent = '1';
-    
-    // Show modal
-    modal.style.display = 'block';
+
+    document.getElementById('productModal').style.display = 'block';
     document.body.style.overflow = 'hidden';
 }
 
 function closeModal() {
-    modal.style.display = 'none';
+    document.getElementById('productModal').style.display = 'none';
     document.body.style.overflow = 'auto';
 }
 
-function updateTotalPrice(quantity) {
-    const total = (currentMeal.price * quantity).toFixed(2);
-    document.getElementById('modalTotalPrice').textContent = `$${total}`;
+function updateTotalPrice(qty) {
+    document.getElementById('modalTotalPrice').textContent = `$${(currentMeal.price * qty).toFixed(2)}`;
 }
- var btnClose = document.querySelector('.close-modal');
- btnClose.addEventListener("click" , closeModal);
- 
-// Setup modal event listeners
+
 function setupModalListeners() {
-    // Close modal button
-    
-    // Close modal when clicking outside
-    window.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            closeModal();
-        }
+    document.querySelector('.close-modal').addEventListener('click', closeModal);
+    window.addEventListener('click', e => {
+        if (e.target === document.getElementById('productModal')) closeModal();
     });
-    
-    // Quantity buttons
+
     document.querySelectorAll('.quantity-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const quantityElement = this.closest('.quantity-selector').querySelector('.quantity');
-            let quantity = parseInt(quantityElement.textContent);
-            
-            if (this.classList.contains('minus')) {
-                quantity = quantity > 1 ? quantity - 1 : 1;
-            } else {
-                quantity++;
-            }
-            
-            quantityElement.textContent = quantity;
-            updateTotalPrice(quantity);
+        btn.addEventListener('click', function () {
+            const qtyEl = document.querySelector('.quantity');
+            let qty = parseInt(qtyEl.textContent);
+            qty = btn.classList.contains('minus') ? Math.max(1, qty - 1) : qty + 1;
+            qtyEl.textContent = qty;
+            updateTotalPrice(qty);
         });
     });
-    
-    // Modal add to cart button
-    document.querySelector('.modal-add-btn').addEventListener('click', function() {
-        const quantity = parseInt(document.querySelector('.quantity').textContent);
-        const total = (currentMeal.price * quantity).toFixed(2);
-        
-        alert(`Added ${quantity}x ${currentMeal.name} to cart\nTotal: $${total}`);
+
+    document.querySelector('.modal-add-btn').addEventListener('click', function () {
+        const qty = parseInt(document.querySelector('.quantity').textContent);
+        addToCart(currentMeal, qty);
         closeModal();
     });
 }
 
-// Search functionality
+// ==== SEARCH & FILTER ====
 function setupSearch() {
-    searchInput.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase().trim();
-        
-        // Filter meals based on search term (name or category)
-        const filteredMeals = meals.filter(meal => 
-            meal.name.toLowerCase().includes(searchTerm) || 
-            meal.category.toLowerCase().includes(searchTerm)
-        );
-        
-        createMealCards(filteredMeals);
+    document.getElementById('searchInput').addEventListener('input', function () {
+        const term = this.value.toLowerCase();
+        const results = meals.filter(m => m.name.toLowerCase().includes(term) || m.category.toLowerCase().includes(term));
+        createMealCards(results);
     });
 }
 
-// Filter buttons functionality
 function setupFilterButtons() {
     document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            // Update active state
+        btn.addEventListener('click', function () {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
-            
-            // Filter meals
             const category = this.dataset.category;
-            if (category === 'all') {
-                createMealCards();
-            } else {
-                const filteredMeals = meals.filter(meal => meal.category === category);
-                createMealCards(filteredMeals);
-            }
+            createMealCards(category === 'all' ? meals : meals.filter(m => m.category === category));
         });
     });
 }
 
-// Scroll buttons functionality
 function setupScrollButtons() {
     const scrollContainer = document.querySelector('.controls');
-    const scrollLeftBtn = document.getElementById('scrollLeft');
-    const scrollRightBtn = document.getElementById('scrollRight');
-    
-    scrollLeftBtn.addEventListener('click', () => {
-        scrollContainer.scrollBy({ left: -200, behavior: 'smooth' });
-    });
-    
-    scrollRightBtn.addEventListener('click', () => {
-        scrollContainer.scrollBy({ left: 200, behavior: 'smooth' });
-    });
-    
-    // Update scroll buttons visibility
-    const updateScrollButtons = () => {
-        scrollLeftBtn.style.display = scrollContainer.scrollLeft > 0 ? 'flex' : 'none';
-        scrollRightBtn.style.display = 
-            scrollContainer.scrollLeft < scrollContainer.scrollWidth - scrollContainer.clientWidth ? 'flex' : 'none';
+    const left = document.getElementById('scrollLeft');
+    const right = document.getElementById('scrollRight');
+
+    left.addEventListener('click', () => scrollContainer.scrollBy({ left: -200, behavior: 'smooth' }));
+    right.addEventListener('click', () => scrollContainer.scrollBy({ left: 200, behavior: 'smooth' }));
+
+    const updateButtons = () => {
+        left.style.display = scrollContainer.scrollLeft > 0 ? 'flex' : 'none';
+        right.style.display = scrollContainer.scrollLeft < scrollContainer.scrollWidth - scrollContainer.clientWidth ? 'flex' : 'none';
     };
-    
-    updateScrollButtons();
-    scrollContainer.addEventListener('scroll', updateScrollButtons);
-    window.addEventListener('resize', updateScrollButtons);
+
+    updateButtons();
+    scrollContainer.addEventListener('scroll', updateButtons);
+    window.addEventListener('resize', updateButtons);
 }
 
+// ==== CART ====
+function initCart() {
+    const saved = localStorage.getItem('moroccanFoodCart');
+    if (saved) cart = JSON.parse(saved);
+    updateCartUI();
+    setupCartListeners();
+}
 
-// Cart functionality
-    let cart = [];
-    
-    // Initialize cart
-    function initCart() {
-        // Load cart from localStorage if available
-        const savedCart = localStorage.getItem('moroccanFoodCart');
-        if (savedCart) {
-            cart = JSON.parse(savedCart);
-            updateCartUI();
-        }
-        
-        // Setup event listeners
-        setupCartListeners();
+function addToCart(meal, qty) {
+    const existing = cart.find(i => i.id === meal.id);
+    if (existing) {
+        existing.quantity += qty;
+    } else {
+        cart.push({ ...meal, quantity: qty });
     }
-    
-    // Add item to cart (called from modal)
-    function addToCart(meal, quantity) {
-        // Check if item already exists in cart
-        const existingItem = cart.find(item => item.id === meal.id);
-        
-        if (existingItem) {
-            existingItem.quantity += quantity;
-        } else {
-            cart.push({
-                id: meal.id,
-                name: meal.name,
-                price: meal.price,
-                image: meal.image,
-                quantity: quantity
-            });
-        }
-        
-        // Save to localStorage
-        localStorage.setItem('moroccanFoodCart', JSON.stringify(cart));
-        
-        // Update UI
-        updateCartUI();
-        
-        // Show confirmation
-        showCartNotification(`${quantity}x ${meal.name} added to cart`);
-    }
-    
-    // Update cart UI
-    function updateCartUI() {
-        const cartItemsContainer = document.querySelector('.cart-items');
-        const cartCount = document.querySelector('.cart-count');
-        const totalPriceElement = document.querySelector('.total-price');
-        
-        // Update count
-        const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
-        cartCount.textContent = itemCount;
-        
-        // Update items list
-        cartItemsContainer.innerHTML = '';
-        
-        if (cart.length === 0) {
-            cartItemsContainer.innerHTML = '<p class="empty-cart">Your cart is empty</p>';
-            totalPriceElement.textContent = '0.00 Dhs';
-            return;
-        }
-        
-        let totalPrice = 0;
-        
-        cart.forEach(item => {
-            const itemTotal = item.price * item.quantity;
-            totalPrice += itemTotal;
-            
-            const cartItem = document.createElement('div');
-            cartItem.className = 'cart-item';
-            cartItem.innerHTML = `
-                <div class="cart-item-img">
-                    <img src="${item.image}" alt="${item.name}">
+    localStorage.setItem('moroccanFoodCart', JSON.stringify(cart));
+    updateCartUI();
+    showCartNotification(`${qty}x ${meal.name} added to cart`);
+}
+
+function updateCartUI() {
+    const container = document.querySelector('.cart-items');
+    const count = document.querySelector('.cart-count');
+    const totalEl = document.querySelector('.total-price');
+
+    const totalQty = cart.reduce((sum, i) => sum + i.quantity, 0);
+    count.textContent = totalQty;
+
+    container.innerHTML = cart.length ? '' : '<p class="empty-cart">Your cart is empty</p>';
+    let total = 0;
+
+    cart.forEach(item => {
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
+        const el = document.createElement('div');
+        el.className = 'cart-item';
+        el.innerHTML = `
+            <div class="cart-item-img"><img src="${item.image}" alt="${item.name}"></div>
+            <div class="cart-item-details">
+                <div class="cart-item-title">${item.name}</div>
+                <div class="cart-item-price">${item.price.toFixed(2)} Dhs</div>
+                <div class="cart-item-quantity">
+                    <button class="decrease-qty" data-id="${item.id}">-</button>
+                    <span>${item.quantity}</span>
+                    <button class="increase-qty" data-id="${item.id}">+</button>
                 </div>
-                <div class="cart-item-details">
-                    <div class="cart-item-title">${item.name}</div>
-                    <div class="cart-item-price">${item.price.toFixed(2)} Dhs</div>
-                    <div class="cart-item-quantity">
-                        <button class="decrease-qty" data-id="${item.id}">-</button>
-                        <span>${item.quantity}</span>
-                        <button class="increase-qty" data-id="${item.id}">+</button>
-                    </div>
-                    <button class="remove-item" data-id="${item.id}">Remove</button>
-                </div>
-            `;
-            
-            cartItemsContainer.appendChild(cartItem);
-        });
-        
-        // Update total price
-        totalPriceElement.textContent = `${totalPrice.toFixed(2)} Dhs`;
-        
-        // Add event listeners to new buttons
-        setupCartItemListeners();
-    }
-    
-    // Setup cart event listeners
-    function setupCartListeners() {
-        // Toggle cart visibility
-        document.querySelector('.cart-toggle-btn').addEventListener('click', () => {
-            document.querySelector('.cart-sidebar').classList.add('open');
-        });
-        
-        // Close cart
-        document.querySelector('.close-cart').addEventListener('click', () => {
-            document.querySelector('.cart-sidebar').classList.remove('open');
-        });
-        
-        // Checkout button
-        document.querySelector('.checkout-btn').addEventListener('click', () => {
-            if (cart.length > 0) {
-                alert('Proceeding to checkout!');
-                // In a real app, you would redirect to checkout page
-            } else {
-                alert('Your cart is empty!');
-            }
-        });
-    }
-    
-    // Setup listeners for cart items (quantity changes, remove)
-    function setupCartItemListeners() {
-        // Increase quantity
-        document.querySelectorAll('.increase-qty').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const itemId = parseInt(this.dataset.id);
-                const item = cart.find(item => item.id === itemId);
-                if (item) {
-                    item.quantity++;
-                    localStorage.setItem('moroccanFoodCart', JSON.stringify(cart));
-                    updateCartUI();
-                }
-            });
-        });
-        
-        // Decrease quantity
-        document.querySelectorAll('.decrease-qty').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const itemId = parseInt(this.dataset.id);
-                const item = cart.find(item => item.id === itemId);
-                if (item) {
-                    if (item.quantity > 1) {
-                        item.quantity--;
-                    } else {
-                        // Remove if quantity would go to 0
-                        cart = cart.filter(item => item.id !== itemId);
-                    }
-                    localStorage.setItem('moroccanFoodCart', JSON.stringify(cart));
-                    updateCartUI();
-                }
-            });
-        });
-        
-        // Remove item
-        document.querySelectorAll('.remove-item').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const itemId = parseInt(this.dataset.id);
-                cart = cart.filter(item => item.id !== itemId);
-                localStorage.setItem('moroccanFoodCart', JSON.stringify(cart));
-                updateCartUI();
-            });
-        });
-    }
-    
-    // Show notification when item is added
-    function showCartNotification(message) {
-        const notification = document.createElement('div');
-        notification.className = 'cart-notification';
-        notification.textContent = message;
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.classList.add('show');
-        }, 10);
-        
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => {
-                notification.remove();
-            }, 300);
-        }, 3000);
-    }
-    
-    // Modify your modal "Add to Cart" button event listener to use this function
-    document.querySelector('.modal-add-btn').addEventListener('click', function() {
-        const quantity = parseInt(document.querySelector('.quantity').textContent);
-        addToCart(currentMeal, quantity);
-        closeModal();
+                <button class="remove-item" data-id="${item.id}">Remove</button>
+            </div>`;
+        container.appendChild(el);
     });
-    
-    // Initialize cart when page loads
-    document.addEventListener('DOMContentLoaded', initCart);
+
+    totalEl.textContent = `${total.toFixed(2)} Dhs`;
+    setupCartItemListeners();
+}
+
+function setupCartListeners() {
+    document.querySelector('.cart-toggle-btn').addEventListener('click', () => {
+        document.querySelector('.cart-sidebar').classList.add('open');
+    });
+    document.querySelector('.close-cart').addEventListener('click', () => {
+        document.querySelector('.cart-sidebar').classList.remove('open');
+    });
+    document.querySelector('.checkout-btn').addEventListener('click', e => {
+        e.preventDefault();
+        if (cart.length === 0) return alert('Your cart is empty!');
+        document.querySelector('.cart-sidebar').classList.remove('open');
+        document.querySelector('.checkout-modal').style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    });
+}
+
+function setupCartItemListeners() {
+    document.querySelectorAll('.increase-qty').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = parseInt(btn.dataset.id);
+            const item = cart.find(i => i.id === id);
+            item.quantity++;
+            localStorage.setItem('moroccanFoodCart', JSON.stringify(cart));
+            updateCartUI();
+        });
+    });
+
+    document.querySelectorAll('.decrease-qty').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = parseInt(btn.dataset.id);
+            const item = cart.find(i => i.id === id);
+            if (item.quantity > 1) {
+                item.quantity--;
+            } else {
+                cart = cart.filter(i => i.id !== id);
+            }
+            localStorage.setItem('moroccanFoodCart', JSON.stringify(cart));
+            updateCartUI();
+        });
+    });
+
+    document.querySelectorAll('.remove-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = parseInt(btn.dataset.id);
+            cart = cart.filter(i => i.id !== id);
+            localStorage.setItem('moroccanFoodCart', JSON.stringify(cart));
+            updateCartUI();
+        });
+    });
+}
+
+function showCartNotification(msg) {
+    const note = document.createElement('div');
+    note.className = 'cart-notification';
+    note.textContent = msg;
+    document.body.appendChild(note);
+    setTimeout(() => note.classList.add('show'), 10);
+    setTimeout(() => {
+        note.classList.remove('show');
+        setTimeout(() => note.remove(), 300);
+    }, 3000);
+}
+
+// ==== CHECKOUT ====
+function setupCheckoutListeners() {
+    const form = document.getElementById('checkoutForm');
+    const checkoutModal = document.querySelector('.checkout-modal');
+    const successModal = document.querySelector('.success-modal');
+
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        cart = [];
+        localStorage.removeItem('moroccanFoodCart');
+        updateCartUI();
+        checkoutModal.style.display = 'none';
+        successModal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    });
+
+    document.querySelector('.close-success').addEventListener('click', () => {
+        successModal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    });
+
+    window.addEventListener('click', e => {
+        if (e.target === checkoutModal) checkoutModal.style.display = 'none';
+        if (e.target === successModal) successModal.style.display = 'none';
+    });
+}
+
